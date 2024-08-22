@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "stm32f1xx_hal.h"
 
 // Definições dos pinos dos sensores e atuadores
 #define SENSOR_DE_FORCA GPIO_PIN_0
@@ -83,4 +84,51 @@ static void MX_GPIO_Init(void) {
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(GPIOA, & GPIO_InitStruct);
+}
+
+I2C_HandleTypeDef hi2c1;
+
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_I2C1_Init(void);
+
+int main(void) {
+    HAL_Init();
+    SystemClock_Config();
+    MX_GPIO_Init();
+    MX_I2C1_Init();
+
+    uint8_t i2c_addr = 0x2C; // Endereço I2C do AD5254 sem bits de R/W
+
+    uint8_t data[2];
+    data[0] = 0x00; // Endereço do registro de comando
+    data[1] = 0x80; // Valor a ser escrito
+
+    while (1) {
+        HAL_I2C_Master_Transmit(&hi2c1, i2c_addr << 1, data, 2, HAL_MAX_DELAY);
+        HAL_Delay(1000);
+    }
+}
+
+static void MX_I2C1_Init(void) {
+    hi2c1.Instance = I2C1;
+    hi2c1.Init.ClockSpeed = 100000;
+    hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+    hi2c1.Init.OwnAddress1 = 0;
+    hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+    hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+    hi2c1.Init.OwnAddress2 = 0;
+    hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+    hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+    if (HAL_I2C_Init(&hi2c1) != HAL_OK) {
+        Error_Handler();
+    }
+}
+
+void SystemClock_Config(void) {
+    // Configuração do clock do sistema
+}
+
+static void MX_GPIO_Init(void) {
+    // Inicialização dos GPIOs
 }
